@@ -1,0 +1,9 @@
+{
+  "name": "spi-koshak",
+  "version": "0.1.0",
+  "description": "A cat that is tired of your excuses.",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}
