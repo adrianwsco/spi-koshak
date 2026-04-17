@@ -565,7 +565,14 @@ async function callClaude(messages, _attempt = 0) {
             }
             return parsed;
         } catch (e) {
-            console.error('Failed to parse Claude JSON. Raw content:', content);
+            // Parse failure — Claude occasionally returns a preamble or markdown fence
+            // despite instructions. One silent retry before surfacing to the user.
+            if (_attempt === 0) {
+                console.warn('Parse failed, retrying once. Raw content:', content);
+                await sleep(800);
+                return callClaude(messages, _attempt + 1);
+            }
+            console.error('Failed to parse Claude JSON after retry. Raw:', content);
             showError('parse error');
             return null;
         }
