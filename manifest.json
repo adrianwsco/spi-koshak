@@ -1,0 +1,10 @@
+{
+  "name": "спи, кошак",
+  "short_name": "Спи",
+  "description": "A cat that is tired of your excuses.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0807",
+  "theme_color": "#0a0807",
+  "orientation": "portrait"
+}
