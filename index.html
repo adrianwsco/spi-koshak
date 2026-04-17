@@ -30,6 +30,7 @@
         --record-active: #b85c3a;
 
         /* Glow colors per cat state */
+        --glow-neutral:       rgba(220, 170, 120, 0.30);
         --glow-listening:     rgba(255, 200, 100, 0.65);
         --glow-happy:         rgba(255, 170,  50, 0.85);
         --glow-gotcha:        rgba(230,  40,  30, 0.80);
@@ -38,6 +39,7 @@
         --glow-sleeping:      rgba( 30,  45, 110, 0.75);
 
         /* Per-state pulse cycle durations */
+        --pulse-neutral:      8.0s;
         --pulse-happy:        3.0s;
         --pulse-listening:    2.4s;
         --pulse-dismissive:   4.0s;
@@ -162,6 +164,11 @@
         background: radial-gradient(circle at center, transparent, transparent);
     }
 
+    .cat-glow.neutral {
+        opacity: 1;
+        background: radial-gradient(circle at 50% 50%, var(--glow-neutral), transparent var(--glow-spread));
+        animation: pulseAmbient var(--pulse-neutral) ease-in-out infinite;
+    }
     .cat-glow.listening {
         opacity: 1;
         background: radial-gradient(circle at 50% 45%, var(--glow-listening), transparent var(--glow-spread));
@@ -193,21 +200,25 @@
         animation: pulseDeep var(--pulse-sleeping) ease-in-out infinite;
     }
 
+    @keyframes pulseAmbient {
+        0%, 100% { filter: brightness(1); }
+        50%      { filter: brightness(1.05); }
+    }
     @keyframes pulseStrong {
         0%, 100% { filter: brightness(1); }
-        50%      { filter: brightness(1.35); }
+        50%      { filter: brightness(1.15); }
     }
     @keyframes pulseMedium {
         0%, 100% { filter: brightness(1); }
-        50%      { filter: brightness(1.2); }
+        50%      { filter: brightness(1.10); }
     }
     @keyframes pulseSubtle {
-        0%, 100% { filter: brightness(0.95); }
-        50%      { filter: brightness(1.1); }
+        0%, 100% { filter: brightness(1); }
+        50%      { filter: brightness(1.05); }
     }
     @keyframes pulseDeep {
-        0%, 100% { filter: brightness(0.85); }
-        50%      { filter: brightness(1.1); }
+        0%, 100% { filter: brightness(0.95); }
+        50%      { filter: brightness(1.05); }
     }
     @keyframes gotchaFlash {
         0%   { opacity: 0; }
@@ -389,17 +400,18 @@
 
     </div>
 
-    <div class="dev-info" id="devInfo">v0.2</div>
+    <div class="dev-info" id="devInfo">v0.3</div>
     <div class="error-banner" id="errorBanner"></div>
 
 <script>
 'use strict';
 
 // ============================================================================
-// СПИ, КОШАК — Sprint 1.5
-// Visual integration: single counter hero + sleeping. Emotional differentiation
-// carried by glow color + pulse rhythm, not by image swap.
-// Audio architecture preserved from Sprint 1 (build team).
+// СПИ, КОШАК — Sprint 1.5 (v0.3)
+// Visual integration: single counter hero + sleeping.
+// Neutral now has its own ambient warm glow — no more on/off flicker between turns.
+// Pulse intensities dialed down from prototype values to avoid false-depth zoom.
+// Audio architecture preserved from Sprint 1.
 // ============================================================================
 
 const S = {
@@ -431,8 +443,9 @@ const UI = {
 
 // State → { image, glow } mapping.
 // Counter hero handles six states; sleeping hero handles sleeping only.
+// Neutral now has an ambient warm glow so state changes never create an on/off flicker.
 const STATE_MAP = {
-    neutral:      { image: 'counter',  glow: null           },
+    neutral:      { image: 'counter',  glow: 'neutral'      },
     listening:    { image: 'counter',  glow: 'listening'    },
     happy:        { image: 'counter',  glow: 'happy'        },
     gotcha:       { image: 'counter',  glow: 'gotcha'       },
@@ -511,7 +524,7 @@ function setCatState(state) {
 }
 
 function updateDevInfo() {
-    UI.devInfo.textContent = `v0.2 · ${S.phase} · ${S.catState}`;
+    UI.devInfo.textContent = `v0.3 · ${S.phase} · ${S.catState}`;
 }
 
 function setSubtitle(text, { userQuote = false } = {}) {
