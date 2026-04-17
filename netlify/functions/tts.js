@@ -5,7 +5,7 @@
 
 const DEFAULT_VOICE = 'onyx';
 const DEFAULT_SPEED = 0.75;
-const DEFAULT_MODEL = 'tts-1-hd';
+const DEFAULT_MODEL = 'tts-1';
 
 // ---------- Cyrillic → Latin transliteration for TTS ----------
 // OpenAI's English TTS mangles or skips Cyrillic. We transliterate before sending
