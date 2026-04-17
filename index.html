@@ -16,50 +16,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Courier+Prime&display=swap" rel="stylesheet">
 
     <style>
-    /* ========================================================================
-       CAT VISUAL SYSTEM — tune these to taste (Phase 1.5 integration)
-       ======================================================================== */
     :root {
         --bg: #0a0807;
         --bg-deep: #050302;
+        --glow-primary: #d4a574;
+        --glow-ember: #b85c3a;
         --text: #e8dcc4;
         --text-muted: #6b5d4a;
         --text-dim: #3d3528;
         --error: #8b3a2a;
-        --record-fill: #d4a574;
-        --record-active: #b85c3a;
-
-        /* Glow colors per cat state */
-        --glow-listening:     rgba(255, 200, 100, 0.65);
-        --glow-happy:         rgba(255, 170,  50, 0.85);
-        --glow-gotcha:        rgba(230,  40,  30, 0.80);
-        --glow-dismissive:    rgba( 90, 115, 155, 0.85);
-        --glow-disappointed:  rgba( 45,  30,  90, 0.90);
-        --glow-sleeping:      rgba( 30,  45, 110, 0.75);
-
-        /* Per-state pulse cycle durations */
-        --pulse-happy:        3.0s;
-        --pulse-listening:    2.4s;
-        --pulse-dismissive:   4.0s;
-        --pulse-disappointed: 5.0s;
-        --pulse-sleeping:     6.0s;
-
-        /* Glow behavior */
-        --glow-transition: 1.0s;
-        --glow-blend:      hard-light;
-        --glow-spread:     95%;
-
-        /* Per-state image alignment.
-           All three MJ images are 2:3 but cat sits at different Y positions.
-           Nudge these if the cat appears to jump between states on your device.
-           Positive translateY = image shifts DOWN (cat moves toward bottom).
-           Scale > 1 = zoom in (crops edges). Scale < 1 = zoom out (shows more). */
-        --counter-scale:   1.00;
-        --counter-offset:  0%;
-        --stool-scale:     1.00;
-        --stool-offset:    0%;
-        --sleeping-scale:  1.00;
-        --sleeping-offset: 0%;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -84,7 +49,7 @@
         touch-action: manipulation;
     }
 
-    /* grain overlay — low-light bar texture */
+    /* grain overlay for low-light bar texture */
     body::before {
         content: '';
         position: fixed;
@@ -96,7 +61,7 @@
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.7'/></svg>");
     }
 
-    /* vignette from edges */
+    /* vignette from edges for depth */
     body::after {
         content: '';
         position: fixed;
@@ -115,7 +80,7 @@
         z-index: 1;
     }
 
-    /* ---------- Start overlay ---------- */
+    /* ---------- Start overlay: iOS audio-gesture gate + entry moment ---------- */
 
     .start-overlay {
         position: fixed;
@@ -156,7 +121,7 @@
 
     @keyframes pulse-prompt {
         0%, 100% { opacity: 0.4; }
-        50%      { opacity: 0.9; }
+        50% { opacity: 0.9; }
     }
 
     /* ---------- Cat stage ---------- */
@@ -167,103 +132,62 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        min-height: 0;
-        padding: 12px;
     }
-
-    .cat-stage {
-        position: relative;
-        aspect-ratio: 2 / 3;
-        height: 100%;
-        max-width: 100%;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #000;
-        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
-    }
-
-    .cat-image {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0;
-        transition: opacity var(--glow-transition) ease;
-        transform-origin: center center;
-    }
-
-    .cat-image.active { opacity: 1; }
-
-    /* Per-state alignment — subtle image positioning to reduce jump between states */
-    .cat-image.cat-counter  { transform: translateY(var(--counter-offset))  scale(var(--counter-scale)); }
-    .cat-image.cat-stool    { transform: translateY(var(--stool-offset))    scale(var(--stool-scale)); }
-    .cat-image.cat-sleeping { transform: translateY(var(--sleeping-offset)) scale(var(--sleeping-scale)); }
-
-    /* ---------- State glow overlay ---------- */
 
     .cat-glow {
         position: absolute;
-        inset: 0;
-        pointer-events: none;
-        mix-blend-mode: var(--glow-blend);
-        opacity: 0;
-        transition: opacity var(--glow-transition) ease,
-                    background var(--glow-transition) ease;
-        background: radial-gradient(circle at center, transparent, transparent);
+        width: 75vmin;
+        height: 75vmin;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+            rgba(212, 165, 116, 0.35) 0%,
+            rgba(184, 92, 58, 0.16) 30%,
+            transparent 62%);
+        filter: blur(18px);
+        animation: breathe 6s ease-in-out infinite;
+        transition: all 1.5s ease;
     }
 
-    .cat-glow.listening {
-        opacity: 1;
-        background: radial-gradient(circle at 50% 45%, var(--glow-listening), transparent var(--glow-spread));
-        animation: pulseMedium var(--pulse-listening) ease-in-out infinite;
-    }
-    .cat-glow.happy {
-        opacity: 1;
-        background: radial-gradient(circle at 50% 55%, var(--glow-happy), transparent var(--glow-spread));
-        animation: pulseStrong var(--pulse-happy) ease-in-out infinite;
-    }
-    .cat-glow.gotcha {
-        opacity: 1;
-        background: radial-gradient(circle at 50% 40%, var(--glow-gotcha), transparent var(--glow-spread));
-        animation: gotchaFlash 1.2s ease-out 1;
-    }
-    .cat-glow.dismissive {
-        opacity: 1;
-        background: radial-gradient(circle at 50% 40%, var(--glow-dismissive), transparent var(--glow-spread));
-        animation: pulseSubtle var(--pulse-dismissive) ease-in-out infinite;
-    }
-    .cat-glow.disappointed {
-        opacity: 1;
-        background: radial-gradient(circle at 50% 40%, var(--glow-disappointed), transparent var(--glow-spread));
-        animation: pulseSubtle var(--pulse-disappointed) ease-in-out infinite;
-    }
-    .cat-glow.sleeping {
-        opacity: 1;
-        background: radial-gradient(circle at 50% 50%, var(--glow-sleeping), transparent var(--glow-spread));
-        animation: pulseDeep var(--pulse-sleeping) ease-in-out infinite;
+    @keyframes breathe {
+        0%, 100% { transform: scale(1); opacity: 0.85; }
+        50% { transform: scale(1.04); opacity: 1; }
     }
 
-    @keyframes pulseStrong {
-        0%, 100% { filter: brightness(1); }
-        50%      { filter: brightness(1.35); }
+    .stage.speaking .cat-glow {
+        animation-duration: 2.4s;
+        background: radial-gradient(circle,
+            rgba(212, 165, 116, 0.5) 0%,
+            rgba(184, 92, 58, 0.25) 30%,
+            transparent 62%);
     }
-    @keyframes pulseMedium {
-        0%, 100% { filter: brightness(1); }
-        50%      { filter: brightness(1.2); }
+
+    .stage.listening .cat-glow {
+        background: radial-gradient(circle,
+            rgba(212, 165, 116, 0.45) 0%,
+            rgba(184, 92, 58, 0.2) 30%,
+            transparent 62%);
     }
-    @keyframes pulseSubtle {
-        0%, 100% { filter: brightness(0.95); }
-        50%      { filter: brightness(1.1); }
+
+    .stage.complete .cat-glow {
+        animation-duration: 12s;
+        opacity: 0.35;
+        background: radial-gradient(circle,
+            rgba(212, 165, 116, 0.2) 0%,
+            transparent 55%);
     }
-    @keyframes pulseDeep {
-        0%, 100% { filter: brightness(0.85); }
-        50%      { filter: brightness(1.1); }
+
+    .cat {
+        position: relative;
+        width: min(280px, 62vmin);
+        height: min(280px, 62vmin);
+        z-index: 2;
+        transition: transform 0.8s ease;
     }
-    @keyframes gotchaFlash {
-        0%   { opacity: 0; }
-        15%  { opacity: 1.4; }
-        100% { opacity: 1; }
+
+    .cat svg {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 14px 34px rgba(0,0,0,0.65));
     }
 
     /* ---------- Subtitle ---------- */
@@ -283,7 +207,9 @@
         text-wrap: balance;
     }
 
-    .subtitle.visible { opacity: 1; }
+    .subtitle.visible {
+        opacity: 1;
+    }
 
     .subtitle.user-quote {
         color: var(--text-muted);
@@ -306,8 +232,8 @@
         height: 84px;
         border-radius: 50%;
         background: transparent;
-        border: 2px solid var(--record-fill);
-        color: var(--record-fill);
+        border: 2px solid var(--glow-primary);
+        color: var(--glow-primary);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -316,22 +242,31 @@
         position: relative;
     }
 
-    .record-button:active:not(:disabled) { transform: scale(0.94); }
+    .record-button:active:not(:disabled) {
+        transform: scale(0.94);
+    }
 
     .record-button.recording {
-        background: var(--record-active);
-        border-color: var(--record-active);
+        background: var(--glow-ember);
+        border-color: var(--glow-ember);
         color: var(--bg-deep);
         animation: pulse-record 1.3s ease-in-out infinite;
     }
 
     @keyframes pulse-record {
         0%, 100% { box-shadow: 0 0 0 0 rgba(184, 92, 58, 0.55); }
-        50%      { box-shadow: 0 0 0 20px rgba(184, 92, 58, 0); }
+        50% { box-shadow: 0 0 0 20px rgba(184, 92, 58, 0); }
     }
 
-    .record-button svg { width: 30px; height: 30px; }
-    .record-button:disabled { opacity: 0.25; cursor: not-allowed; }
+    .record-button svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .record-button:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+    }
 
     .state-label {
         font-family: 'Courier Prime', monospace;
@@ -358,8 +293,14 @@
     }
 
     .goodnight-button:hover,
-    .goodnight-button:active { opacity: 1; }
-    .goodnight-button:disabled { opacity: 0.15; cursor: not-allowed; }
+    .goodnight-button:active {
+        opacity: 1;
+    }
+
+    .goodnight-button:disabled {
+        opacity: 0.15;
+        cursor: not-allowed;
+    }
 
     /* ---------- Dev + error ---------- */
 
@@ -398,11 +339,14 @@
         text-overflow: ellipsis;
     }
 
-    .error-banner.visible { opacity: 1; }
+    .error-banner.visible {
+        opacity: 1;
+    }
     </style>
 </head>
 <body>
 
+    <!-- Entry gate: covers page until first tap (iOS audio unlock + thematic entry) -->
     <div class="start-overlay" id="startOverlay">
         <div class="title">Спи</div>
         <div class="prompt">tap to enter</div>
@@ -411,14 +355,37 @@
     <div class="stage" id="stage">
 
         <div class="cat-area">
-            <div class="cat-stage">
-                <img class="cat-image cat-counter active" id="imgCounter"
-                     src="/assets/cat_counter.png" alt="" draggable="false">
-                <img class="cat-image cat-stool" id="imgStool"
-                     src="/assets/cat_stool.png" alt="" draggable="false">
-                <img class="cat-image cat-sleeping" id="imgSleeping"
-                     src="/assets/cat_sleeping.png" alt="" draggable="false">
-                <div class="cat-glow" id="catGlow"></div>
+            <div class="cat-glow"></div>
+            <div class="cat" id="cat">
+                <!-- Placeholder cat silhouette. Will be replaced by Midjourney assets in Sprint 2. -->
+                <svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" aria-label="Cat">
+                    <defs>
+                        <radialGradient id="catGrad" cx="50%" cy="35%" r="65%">
+                            <stop offset="0%" stop-color="#1d1813"/>
+                            <stop offset="100%" stop-color="#050302"/>
+                        </radialGradient>
+                    </defs>
+                    <!-- Ears -->
+                    <path d="M 62 38 L 72 8 L 94 34 Z" fill="url(#catGrad)"/>
+                    <path d="M 138 38 L 128 8 L 106 34 Z" fill="url(#catGrad)"/>
+                    <!-- Inner ear hint -->
+                    <path d="M 74 24 L 80 16 L 86 28 Z" fill="#2a1f1a" opacity="0.8"/>
+                    <path d="M 126 24 L 120 16 L 114 28 Z" fill="#2a1f1a" opacity="0.8"/>
+                    <!-- Head -->
+                    <ellipse cx="100" cy="58" rx="46" ry="40" fill="url(#catGrad)"/>
+                    <!-- Body -->
+                    <ellipse cx="100" cy="158" rx="56" ry="60" fill="url(#catGrad)"/>
+                    <!-- Tail curl around side -->
+                    <path d="M 152 182 Q 184 160 178 128 Q 172 106 158 116" stroke="url(#catGrad)" stroke-width="16" fill="none" stroke-linecap="round"/>
+                    <!-- Eyes: warm amber glints -->
+                    <ellipse cx="84" cy="56" rx="3.5" ry="5.5" fill="#d4a574" opacity="0.92"/>
+                    <ellipse cx="116" cy="56" rx="3.5" ry="5.5" fill="#d4a574" opacity="0.92"/>
+                    <!-- Nose shadow -->
+                    <ellipse cx="100" cy="70" rx="3" ry="2" fill="#3d2a1e" opacity="0.7"/>
+                    <!-- Jacket collar: diagonal across chest -->
+                    <path d="M 70 130 L 130 148" stroke="#2a1f1a" stroke-width="4" opacity="0.75" stroke-linecap="round"/>
+                    <path d="M 66 142 L 134 158" stroke="#1a120d" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+                </svg>
             </div>
         </div>
 
@@ -436,21 +403,22 @@
 
     </div>
 
-    <div class="dev-info" id="devInfo">v0.2</div>
+    <div class="dev-info" id="devInfo">v0.1</div>
     <div class="error-banner" id="errorBanner"></div>
 
 <script>
 'use strict';
 
 // ============================================================================
-// СПИ, КОШАК — Sprint 1.5
-// Persona validation loop + visual integration (MJ heroes + state glow system).
+// СПИ, КОШАК — Sprint 1
+// Persona validation loop. No DB, no memory between opens, no notifications yet.
+// State kept client-side in a single conversation array.
 // ============================================================================
 
 const S = {
-    phase: 'gated',
-    catState: 'neutral',
-    conversation: [],
+    phase: 'gated',              // gated | loading | idle | listening | processing | speaking | complete
+    catState: 'neutral',         // neutral | listening | dismissive | disappointed | gotcha | happy | sleeping
+    conversation: [],            // Anthropic messages shape: [{role, content}]
     recorder: null,
     audioChunks: [],
     stream: null,
@@ -461,30 +429,14 @@ const S = {
 };
 
 const UI = {
-    stage:        document.getElementById('stage'),
-    subtitle:     document.getElementById('subtitle'),
-    recordBtn:    document.getElementById('recordBtn'),
+    stage: document.getElementById('stage'),
+    subtitle: document.getElementById('subtitle'),
+    recordBtn: document.getElementById('recordBtn'),
     goodnightBtn: document.getElementById('goodnightBtn'),
-    stateLabel:   document.getElementById('stateLabel'),
-    errorBanner:  document.getElementById('errorBanner'),
-    devInfo:      document.getElementById('devInfo'),
+    stateLabel: document.getElementById('stateLabel'),
+    errorBanner: document.getElementById('errorBanner'),
+    devInfo: document.getElementById('devInfo'),
     startOverlay: document.getElementById('startOverlay'),
-    catGlow:      document.getElementById('catGlow'),
-    imgCounter:   document.getElementById('imgCounter'),
-    imgStool:     document.getElementById('imgStool'),
-    imgSleeping:  document.getElementById('imgSleeping'),
-};
-
-// State → { image, glow } mapping.
-// Two heroes cover five states; sleeping has its own hero.
-const STATE_MAP = {
-    neutral:      { image: 'counter',  glow: null           },
-    listening:    { image: 'counter',  glow: 'listening'    },
-    happy:        { image: 'stool',    glow: 'happy'        },
-    gotcha:       { image: 'counter',  glow: 'gotcha'       },
-    dismissive:   { image: 'counter',  glow: 'dismissive'   },
-    disappointed: { image: 'counter',  glow: 'disappointed' },
-    sleeping:     { image: 'sleeping', glow: 'sleeping'     },
 };
 
 // ---------- Small helpers ----------
@@ -530,6 +482,10 @@ const PHASE_LABELS = {
 
 function setPhase(phase) {
     S.phase = phase;
+    UI.stage.classList.toggle('speaking', phase === 'speaking');
+    UI.stage.classList.toggle('listening', phase === 'listening');
+    UI.stage.classList.toggle('complete',  phase === 'complete');
+
     UI.stateLabel.textContent = PHASE_LABELS[phase] ?? '';
 
     const blockRecord = phase === 'processing' || phase === 'speaking' || phase === 'complete' || phase === 'loading' || phase === 'gated';
@@ -543,25 +499,12 @@ function setPhase(phase) {
 
 function setCatState(state) {
     S.catState = state || 'neutral';
-    const config = STATE_MAP[S.catState] || STATE_MAP.neutral;
-
-    // Swap visible hero image
-    UI.imgCounter.classList.toggle('active',  config.image === 'counter');
-    UI.imgStool.classList.toggle('active',    config.image === 'stool');
-    UI.imgSleeping.classList.toggle('active', config.image === 'sleeping');
-
-    // Reset glow, then apply current state (force animation restart)
-    UI.catGlow.className = 'cat-glow';
-    if (config.glow) {
-        void UI.catGlow.offsetWidth;
-        UI.catGlow.classList.add(config.glow);
-    }
-
     updateDevInfo();
+    // Sprint 2: swap the SVG / image based on state.
 }
 
 function updateDevInfo() {
-    UI.devInfo.textContent = `v0.2 · ${S.phase} · ${S.catState}`;
+    UI.devInfo.textContent = `v0.1 · ${S.phase} · ${S.catState}`;
 }
 
 function setSubtitle(text, { userQuote = false } = {}) {
@@ -614,6 +557,7 @@ async function callClaude(messages, _attempt = 0) {
         const cleaned = content.replace(/```json/gi, '').replace(/```/g, '').trim();
         try {
             const parsed = JSON.parse(cleaned);
+            // Light shape validation
             if (typeof parsed.text !== 'string' || parsed.text.length === 0) {
                 console.error('Parsed Claude JSON missing text field:', parsed);
                 showError('bad response shape');
@@ -621,6 +565,8 @@ async function callClaude(messages, _attempt = 0) {
             }
             return parsed;
         } catch (e) {
+            // Parse failure — Claude occasionally returns a preamble or markdown fence
+            // despite instructions. One silent retry before surfacing to the user.
             if (_attempt === 0) {
                 console.warn('Parse failed, retrying once. Raw content:', content);
                 await sleep(800);
@@ -698,6 +644,7 @@ async function speak(text) {
         });
     } catch (err) {
         console.error('TTS error:', err);
+        // Text remains on screen so the user can still read what the cat said.
         S.speaking = false;
     }
 }
@@ -774,6 +721,9 @@ async function runOpening() {
     setPhase('loading');
     setSubtitle('');
 
+    // Kickoff: a short user turn that asks Claude to produce the opening line.
+    // We keep it in S.conversation so subsequent turns have coherent context
+    // (the cat's opening is real history the cat "said" at the top of the session).
     S.conversation.push({
         role: 'user',
         content: 'I just opened the app. Give me a short opening line — vary it from a typical greeting, one or two sentences. JSON only.'
@@ -812,6 +762,7 @@ async function handleUserTurn(userText) {
 
     const response = await callClaude(S.conversation);
     if (!response) {
+        // Roll back the user turn so retry is clean
         S.conversation.pop();
         setPhase('idle');
         return;
@@ -852,6 +803,15 @@ async function toggleRecord() {
             setPhase('idle');
             return;
         }
+
+        // Safari on iOS releases the mic stream hardware asynchronously — the
+        // audio session isn't fully available for playback the instant t.stop()
+        // is called. A short hold here lets the audio hardware clear before the
+        // TTS pipeline tries to claim it, preventing intermittent silent responses.
+        // 150ms is enough; this runs before transcription so it's invisible to
+        // the user (they're already watching the processing state).
+        await sleep(150);
+
         setPhase('processing');
         setSubtitle('');
         const text = await transcribe(blob, S.recordedMime);
@@ -874,6 +834,7 @@ async function begin() {
 
     UI.startOverlay.classList.add('hidden');
 
+    // Play a silent unlock sound on iOS to enable audio later (required after first gesture)
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -887,7 +848,7 @@ async function begin() {
         // Non-fatal
     }
 
-    await sleep(400);
+    await sleep(400); // Let the overlay fade before loading state appears
     setPhase('idle');
     await runOpening();
 }
@@ -898,8 +859,8 @@ UI.startOverlay.addEventListener('touchend', (e) => {
     begin();
 }, { passive: false });
 
+// Initial state
 setPhase('gated');
-setCatState('neutral');
 </script>
 </body>
 </html>
