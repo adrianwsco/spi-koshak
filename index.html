@@ -614,7 +614,7 @@ async function speak(text) {
         const res = await fetch('/.netlify/functions/tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, voice: 'onyx', speed: 0.80 })
+            body: JSON.stringify({ text, voice: 'onyx', speed: 0.75 })
         });
         if (!res.ok) throw new Error('TTS not ok');
         const { audioBase64 } = await res.json();
