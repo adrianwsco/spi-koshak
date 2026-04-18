@@ -29,7 +29,6 @@
         --record-fill: #d4a574;
         --record-active: #b85c3a;
 
-        /* Glow colors per cat state */
         --glow-neutral:       rgba(220, 170, 120, 0.30);
         --glow-listening:     rgba(255, 200, 100, 0.65);
         --glow-happy:         rgba(255, 170,  50, 0.85);
@@ -38,7 +37,6 @@
         --glow-disappointed:  rgba( 45,  30,  90, 0.90);
         --glow-sleeping:      rgba( 30,  45, 110, 0.75);
 
-        /* Per-state pulse cycle durations */
         --pulse-neutral:      8.0s;
         --pulse-happy:        3.0s;
         --pulse-listening:    2.4s;
@@ -46,15 +44,10 @@
         --pulse-disappointed: 5.0s;
         --pulse-sleeping:     6.0s;
 
-        /* Glow behavior */
         --glow-transition: 1.0s;
         --glow-blend:      hard-light;
         --glow-spread:     95%;
 
-        /* Per-image alignment tuning. Counter hero handles six states;
-           sleeping hero handles sleeping only. Tune if images don't align
-           on your device. Positive translateY = image shifts down.
-           Scale > 1 = zoom in (crops edges). */
         --counter-scale:   1.00;
         --counter-offset:  0%;
         --sleeping-scale:  1.00;
@@ -112,7 +105,13 @@
         z-index: 1;
     }
 
-    /* ---------- Cat stage ---------- */
+    /* ---------- Cat stage ----------
+       The cat stage needs to fill the available vertical space while keeping
+       a 2:3 aspect ratio. We let the grid cell define available height
+       (1fr in grid-template-rows), then the stage uses max-height: 100%
+       and width: auto to scale proportionally.
+       min-height: 0 on the cat-area is required to allow the grid cell to
+       shrink below its children's intrinsic size if needed. */
 
     .cat-area {
         position: relative;
@@ -121,6 +120,7 @@
         justify-content: center;
         overflow: hidden;
         min-height: 0;
+        min-width: 0;
         padding: 12px;
     }
 
@@ -128,7 +128,9 @@
         position: relative;
         aspect-ratio: 2 / 3;
         height: 100%;
+        max-height: 100%;
         max-width: 100%;
+        width: auto;
         border-radius: 12px;
         overflow: hidden;
         background: #000;
@@ -226,21 +228,29 @@
         100% { opacity: 1; }
     }
 
-    /* ---------- Subtitle ---------- */
+    /* ---------- Subtitle ----------
+       Fixed-height container so long and short responses don't push the cat
+       up/down. Text centers within the reserved area. Short messages leave
+       empty space below. */
 
     .subtitle {
-        padding: 20px 8vw 30px;
+        height: 5.5em;
+        padding: 18px 8vw 18px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
         text-align: center;
-        min-height: 4.5em;
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
         font-weight: 400;
         font-size: clamp(20px, 5.2vw, 28px);
+        line-height: 1.3;
         color: var(--text);
         letter-spacing: 0.012em;
         opacity: 0;
-        transition: opacity 0.6s ease;
+        transition: opacity 0.5s ease;
         text-wrap: balance;
+        overflow: hidden;
     }
 
     .subtitle.visible { opacity: 1; }
@@ -400,19 +410,20 @@
 
     </div>
 
-    <div class="dev-info" id="devInfo">v0.3</div>
+    <div class="dev-info" id="devInfo">v0.5</div>
     <div class="error-banner" id="errorBanner"></div>
 
 <script>
 'use strict';
 
 // ============================================================================
-// СПИ, КОШАК — Sprint 1.5 (v0.3)
-// Visual integration: single counter hero + sleeping.
-// Neutral now has its own ambient warm glow — no more on/off flicker between turns.
-// Pulse intensities dialed down from prototype values to avoid false-depth zoom.
-// Audio architecture preserved from Sprint 1.
+// СПИ, КОШАК — Sprint 1.5 (v0.5)
+// Cat stage sizing fix: now fills available vertical space while holding 2:3.
+// Subtitle has fixed height so text length doesn't push cat around.
+// Subtitle appears synchronized with audio playback.
 // ============================================================================
+
+const TTS_SPEED = 0.74;
 
 const S = {
     phase: 'loading',
@@ -441,9 +452,6 @@ const UI = {
     imgSleeping:  document.getElementById('imgSleeping'),
 };
 
-// State → { image, glow } mapping.
-// Counter hero handles six states; sleeping hero handles sleeping only.
-// Neutral now has an ambient warm glow so state changes never create an on/off flicker.
 const STATE_MAP = {
     neutral:      { image: 'counter',  glow: 'neutral'      },
     listening:    { image: 'counter',  glow: 'listening'    },
@@ -453,8 +461,6 @@ const STATE_MAP = {
     disappointed: { image: 'counter',  glow: 'disappointed' },
     sleeping:     { image: 'sleeping', glow: 'sleeping'     },
 };
-
-// ---------- Small helpers ----------
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -482,8 +488,6 @@ function filenameForMime(mime) {
     if (mime.includes('wav'))  return 'audio.wav';
     return 'audio.webm';
 }
-
-// ---------- UI state ----------
 
 const PHASE_LABELS = {
     loading:    'waking',
@@ -524,7 +528,7 @@ function setCatState(state) {
 }
 
 function updateDevInfo() {
-    UI.devInfo.textContent = `v0.3 · ${S.phase} · ${S.catState}`;
+    UI.devInfo.textContent = `v0.5 · ${S.phase} · ${S.catState}`;
 }
 
 function setSubtitle(text, { userQuote = false } = {}) {
@@ -539,8 +543,6 @@ function showError(msg) {
     clearTimeout(showError._t);
     showError._t = setTimeout(() => UI.errorBanner.classList.remove('visible'), 4500);
 }
-
-// ---------- API layer ----------
 
 async function callClaude(messages, _attempt = 0) {
     const MAX_RETRIES = 6;
@@ -632,7 +634,6 @@ async function speak(text, preloadedBase64 = null) {
     if (!text) return;
     S.speaking = true;
     setPhase('speaking');
-    setSubtitle(text);
 
     try {
         let audioBase64 = preloadedBase64;
@@ -640,7 +641,7 @@ async function speak(text, preloadedBase64 = null) {
             const res = await fetch('/.netlify/functions/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, voice: 'onyx', speed: 0.73 })
+                body: JSON.stringify({ text, voice: 'onyx', speed: TTS_SPEED })
             });
             if (!res.ok) throw new Error('TTS not ok');
             ({ audioBase64 } = await res.json());
@@ -660,6 +661,10 @@ async function speak(text, preloadedBase64 = null) {
             };
             S.audioEl.onended = cleanup;
             S.audioEl.onerror = cleanup;
+
+            // Subtitle appears synchronized with audio start
+            setSubtitle(text);
+
             S.audioEl.play().catch((e) => {
                 console.error('Audio play rejected:', e);
                 cleanup();
@@ -667,11 +672,10 @@ async function speak(text, preloadedBase64 = null) {
         });
     } catch (err) {
         console.error('TTS error:', err);
+        setSubtitle(text);
         S.speaking = false;
     }
 }
-
-// ---------- Recording ----------
 
 async function startRecording() {
     try {
@@ -737,8 +741,6 @@ function stopRecording() {
     });
 }
 
-// ---------- Conversation turns ----------
-
 async function runOpening() {
     setPhase('loading');
     setSubtitle('');
@@ -758,13 +760,11 @@ async function runOpening() {
     S.conversation.push({ role: 'assistant', content: response.text });
     setCatState(response.state || 'neutral');
 
-    setSubtitle(response.text);
-
     try {
         const res = await fetch('/.netlify/functions/tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: response.text, voice: 'onyx', speed: 0.73 })
+            body: JSON.stringify({ text: response.text, voice: 'onyx', speed: TTS_SPEED })
         });
         if (res.ok) {
             const { audioBase64 } = await res.json();
@@ -797,6 +797,9 @@ async function handleUserTurn(userText) {
 
     S.conversation.push({ role: 'assistant', content: response.text });
     setCatState(response.state || 'neutral');
+
+    setSubtitle('');
+
     await speak(response.text);
 
     if (response.complete) {
@@ -816,8 +819,6 @@ function endSession() {
     setPhase('complete');
     setCatState('sleeping');
 }
-
-// ---------- Record button ----------
 
 async function toggleRecord() {
     if (S.phase === 'idle') {
@@ -840,7 +841,6 @@ async function toggleRecord() {
         await sleep(150);
 
         setPhase('processing');
-        setSubtitle('');
         const text = await transcribe(blob, S.recordedMime);
         if (!text) {
             setPhase('idle');
@@ -852,8 +852,6 @@ async function toggleRecord() {
 
 UI.recordBtn.addEventListener('click', toggleRecord);
 UI.goodnightBtn.addEventListener('click', handleGoodnightButton);
-
-// ---------- Boot ----------
 
 setPhase('loading');
 setCatState('neutral');
