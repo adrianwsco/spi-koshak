@@ -286,10 +286,25 @@
 
     .record-button:active:not(:disabled) { transform: scale(0.94); }
 
-    .record-button.recording {
+   .record-button.recording {
     background: var(--record-active);
     border-color: var(--record-active);
     color: var(--bg-deep);
+}
+
+.record-button.recording::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--record-active);
+    animation: pulse-record 1.3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse-record {
+    0%   { transform: scale(1);    opacity: 0.8; }
+    100% { transform: scale(1.5);  opacity: 0;   }
 }
 
     @keyframes pulse-record {
