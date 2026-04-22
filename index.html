@@ -307,10 +307,6 @@
     100% { transform: scale(1.5);  opacity: 0;   }
 }
 
-    @keyframes pulse-record {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(184, 92, 58, 0.55); }
-        50%      { box-shadow: 0 0 0 20px rgba(184, 92, 58, 0); }
-    }
 
     .record-button svg { width: 30px; height: 30px; }
     .record-button:disabled { opacity: 0.25; cursor: not-allowed; }
@@ -531,11 +527,8 @@ function setCatState(state) {
     UI.imgCounter.classList.toggle('active',  config.image === 'counter');
     UI.imgSleeping.classList.toggle('active', config.image === 'sleeping');
 
-    UI.catGlow.className = 'cat-glow';
-    if (config.glow) {
-        void UI.catGlow.offsetWidth;
-        UI.catGlow.classList.add(config.glow);
-    }
+    const glowStates = ['neutral', 'listening', 'happy', 'gotcha', 'dismissive', 'disappointed', 'sleeping'];
+    glowStates.forEach(s => UI.catGlow.classList.toggle(s, config.glow === s));
 
     updateDevInfo();
 }
