@@ -287,11 +287,10 @@
     .record-button:active:not(:disabled) { transform: scale(0.94); }
 
     .record-button.recording {
-        background: var(--record-active);
-        border-color: var(--record-active);
-        color: var(--bg-deep);
-        animation: pulse-record 1.3s ease-in-out infinite;
-    }
+    background: var(--record-active);
+    border-color: var(--record-active);
+    color: var(--bg-deep);
+}
 
     @keyframes pulse-record {
         0%, 100% { box-shadow: 0 0 0 0 rgba(184, 92, 58, 0.55); }
